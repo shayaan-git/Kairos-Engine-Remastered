@@ -1,5 +1,6 @@
 import { configs } from "../config/config.js";
 import userModel from "../models/user.model.js";
+import sessionModel from "../models/session.model.js";
 import { sendEmail } from "../services/mail.service.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -30,24 +31,16 @@ export async function registerUser(req, res) {
          password,
       });
 
-      // Generate email verification token
-      // const emailVerificationToken = jwt.sign(
-      //    { email: user.email, id: user._id },
-      //    configs.JWT_EMAIL_VERIFY_SECRET,
-      //    { expiresIn: "15m" },
-      // );
-
       const emailVerificationToken = crypto.randomBytes(32).toString("hex");
 
       // Hash the token before saving to the database
-
       const emailVerificationTokenHash = crypto
          .createHash("sha256")
          .update(emailVerificationToken)
          .digest("hex");
 
       user.emailVerificationTokenHash = emailVerificationTokenHash;
-      user.emailVerificationTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+      user.emailVerificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
       await user.save();
 
@@ -80,7 +73,7 @@ export async function registerUser(req, res) {
 
 export async function verifyEmail(req, res) {
    try {
-      const { token } = req.query; //JWT Sign pe "email" ko set kiya gya tha
+      const { token } = req.query; // crypto se "emailVerificationToken" ko set kiya gya aur query mein "token" name se bheja
 
       if (!token) {
          return res.status(400).json({
@@ -252,21 +245,38 @@ export async function loginUser(req, res) {
          });
       }
 
-      // AccessToken
-      const accessToken = jwt.sign(
-         { id: user._id, username: user.username },
-         configs.JWT_ACCESS_SECRET,
-         {
-            expiresIn: "15m",
-         },
-      );
-
-      // RefreshToken
+      // RefreshToken Pehle create kara jata fir access token ko
       const refreshToken = jwt.sign(
          { id: user._id },
          configs.JWT_REFRESH_SECRET,
          {
             expiresIn: "7d",
+         },
+      );
+
+      // Hash this refresh token before saving to database (session collection)
+      const refreshTokenHash = crypto
+         .createHash("sha256")
+         .update(refreshToken)
+         .digest("hex");
+
+      const session = await sessionModel.create({
+         user: user._id,
+         refreshTokenHash,
+         ip: req.ip,
+         userAgent: req.headers["user-agent"],
+      });
+
+      // AccessToken
+      const accessToken = jwt.sign(
+         {
+            id: user._id,
+            username: user.username,
+            sessionId: session._id,
+         },
+         configs.JWT_ACCESS_SECRET,
+         {
+            expiresIn: "15m",
          },
       );
 
@@ -326,6 +336,23 @@ export async function refreshToken(req, res) {
          });
       }
 
+      const refreshTokenHash = crypto
+         .createHash("sha256")
+         .update(refreshToken)
+         .digest("hex");
+
+      const session = await sessionModel.findOne({
+         refreshTokenHash,
+         revoked: false,
+      });
+
+      if (!session) {
+         return res.status(401).json({
+            message: "Invalid Refresh Token",
+         });
+      }
+
+      // Ab yahan access token again de rahe honge
       const accessToken = jwt.sign(
          { id: decoded.id },
          configs.JWT_ACCESS_SECRET,
@@ -341,6 +368,15 @@ export async function refreshToken(req, res) {
             expiresIn: "7d",
          },
       );
+
+      const newRefreshTokenHash = crypto
+         .createHash("sha256")
+         .update(newRefreshToken)
+         .digest("hex");
+
+      session.refreshTokenHash = newRefreshTokenHash; // hash and save/update this new refresh token
+
+      await session.save();
 
       res.cookie("refreshToken", newRefreshToken, {
          httpOnly: true,
@@ -363,16 +399,77 @@ export async function refreshToken(req, res) {
 }
 
 export async function logoutUser(req, res) {
+   const refreshToken = req.cookies.refreshToken;
+
+   if (!refreshToken) {
+      return res.status(400).json({
+         message: "Refresh Token not found",
+         success: false,
+      });
+   }
+
+   //(Kyuki db mein hash format saved hai) Refresh Token ko hash karke fir query karenge - If matched - set Revoked: true
+   const refreshTokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+
+   const session = await sessionModel.findOneAndUpdate(
+      { refreshTokenHash },
+      { $set: { revoked: true } },
+   );
+
+   if (!session) {
+      return res.status(400).json({
+         message: "Invalid Refresh Token",
+      });
+   }
+
+   await session.save();
+
    res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-   });
+   })
+      .status(200)
+      .json({
+         message: "Logout Successful",
+         success: true,
+      });
+}
 
-   res.status(200).json({
-      message: "Logout Successful",
-      success: true,
-   });
+export async function logoutAllUser(req, res) {
+   const refreshToken = req.cookies.refreshToken;
+
+   if (!refreshToken) {
+      return res.status(400).json({
+         message: "Refresh Token not found",
+      });
+   }
+
+   const decoded = jwt.verify(refreshToken, configs.JWT_REFRESH_SECRET);
+
+   await sessionModel.updateMany(
+      {
+         user: decoded.id,
+         revoked: false,
+      },
+      {
+         $set: { revoked: true },
+      },
+   );
+
+   res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+   })
+      .status(200)
+      .json({
+         message: "Logout from all devices Successful",
+         success: true,
+      });
 }
 
 export async function getMe(req, res) {
@@ -382,7 +479,7 @@ export async function getMe(req, res) {
       const user = await userModel.findById(userId).select("-password");
 
       if (!user) {
-         return res.status(403).json({
+         return res.status(404).json({
             message: "User not found",
             success: false,
          });
@@ -391,7 +488,10 @@ export async function getMe(req, res) {
       res.status(200).json({
          message: "User details fetched successfully",
          success: true,
-         user,
+         user: {
+            username: user.username,
+            email: user.email,
+         },
       });
    } catch (err) {
       console.error("Get Me Error: ", err);

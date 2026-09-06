@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import {
    getMe,
    loginUser,
+   logoutAllUser,
    logoutUser,
    refreshToken,
    registerUser,
@@ -28,6 +29,8 @@ authRouter.post("/resend-verification-email", resendVerificationEmail);
 authRouter.post("/login", validate(loginSchema), loginUser);
 
 authRouter.post("/logout", logoutUser);
+
+authRouter.post("/logout-all", logoutAllUser);
 
 authRouter.get("/get-me", authUser, getMe);
 

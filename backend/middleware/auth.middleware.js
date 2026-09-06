@@ -2,7 +2,8 @@ import jwt from "jsonwebtoken";
 import { configs } from "../src/config/config.js";
 
 export function authUser(req, res, next) {
-   const { token } = req.cookies;
+   const authHeader = req.headers.authorization;
+   const token = authHeader?.split(" ")[1]; // bearer <token>
 
    if (!token) {
       return res.status(401).json({
@@ -12,8 +13,7 @@ export function authUser(req, res, next) {
    }
 
    try {
-      const decoded = jwt.verify(token, configs.JWT_SECRET);
-
+      const decoded = jwt.verify(token, configs.JWT_ACCESS_SECRET);
       req.user = { id: decoded.id };
 
       next();

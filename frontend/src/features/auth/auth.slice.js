@@ -1,14 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+// auth slice of state
 const initialState = {
   loading: false,
   user: null,
   error: null,
 };
 
+// Export #1: the whole slice object - (export usually for debugging or testing)
 export const authSlice = createSlice({
   name: "auth",
-  initialState,
+  initialState,   // reducer isi initalState ko update karta hai at dispatch moment
   reducers: {
     setLoading: (state, action) => {
       state.loading = action.payload;
@@ -22,6 +24,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setLoading, setUser, setError } = authSlice.actions;
+export const { setLoading, setUser, setError } = authSlice.actions;  // Export #2: action creators - (export in hook)
 
-export default authSlice.reducer;
+export default authSlice.reducer;   // Export #3: the reducer function - (export in store)
