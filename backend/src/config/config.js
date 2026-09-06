@@ -51,6 +51,7 @@ export const configs = {
    GOOGLE_REFRESH_TOKEN: process.env.GOOGLE_REFRESH_TOKEN,
    GOOGLE_USER: process.env.GOOGLE_USER,
    CLIENT_URL: process.env.CLIENT_URL,
+   NODE_ENV: process.env.NODE_ENV,
    CORS_ORIGIN: process.env.CORS_ORIGIN,
    GROQ_API_KEY: process.env.GROQ_API_KEY,
 

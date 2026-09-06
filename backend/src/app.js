@@ -31,10 +31,10 @@ passport.use(
       {
          clientID: configs.GOOGLE_CLIENT_ID,
          clientSecret: configs.GOOGLE_CLIENT_SECRET,
-         callbackURL: "/auth/google/callback",
+         callbackURL: "/api/auth/google/callback",
       },
       (accessToken, refreshToken, profile, done) => {
-         return done(null, profile);
+         return done(null, profile);   // profile = req.user
       },
    ),
 );

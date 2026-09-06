@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 
 import {
    getMe,
+   googleCallback,
    loginUser,
    logoutAllUser,
    logoutUser,
@@ -38,20 +39,26 @@ authRouter.get("/get-me", authUser, getMe);
 authRouter.get("/refresh-token", refreshToken);
 
 // Google OAuth
-// Route to initiate Google OAuth flow
-authRouter.get('/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+// Route to initiate Google OAuth flow - basically redirects the user to Google's OAuth 2.0 consent screen
+authRouter.get(
+   "/google",
+   passport.authenticate("google", {
+      scope: ["profile", "email"],
+      session: false,
+   }),
 );
 
-// Callback route that Google will redirect to after authentication
-authRouter.get('/google/callback',
-  passport.authenticate('google', { session: false }),
-  (req, res) => {
-    // Generate a JWT for the authenticated user
-    const token = jwt.sign({ id: req.user.id, displayName: req.user.displayName }, configs.JWT_SECRET, { expiresIn: '1h' });
-    // Send the token to the client
-    res.json({ token });
-  }
+// Callback route that Google will redirect to after authenticating google account of user
+authRouter.get(
+   "/google/callback",
+   passport.authenticate("google", {
+      session: false,
+      failureRedirect:
+         configs.NODE_ENV === "development"
+            ? `${configs.CORS_ORIGIN}/login`
+            : "/login",
+   }),
+   googleCallback,
 );
 
 export default authRouter;

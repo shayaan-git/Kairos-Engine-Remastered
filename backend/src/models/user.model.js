@@ -5,8 +5,10 @@ const userSchema = new mongoose.Schema(
    {
       username: {
          type: String,
-         required: [true, "Username is required"],
-         unique: true,
+         required: function () {
+            return !this.fullname; // If fullname is not present, username is required
+         },
+         sparse: true,
          trim: true,
          minlength: [3, "Username must be at least 3 characters long"],
          maxlength: [30, "Username must not exceed 30 characters"],
@@ -24,7 +26,9 @@ const userSchema = new mongoose.Schema(
       },
       password: {
          type: String,
-         required: [true, "Password is required"],
+         required: function () {
+            return !this.googleId; // If googleId is not present, password is required
+         },
          minlength: [6, "Password must be at least 6 characters long"],
          select: false, // Exclude password from query results by default
       },
@@ -43,6 +47,17 @@ const userSchema = new mongoose.Schema(
       verificationEmailLastSentAt: {
          type: Date,
          default: null,
+      },
+      googleId: {
+         type: String,
+         sparse: true,
+      },
+      fullname: {
+         type: String,
+         trim: true,
+      },
+      profilePic: {
+         type: String,
       },
    },
    { timestamps: true },

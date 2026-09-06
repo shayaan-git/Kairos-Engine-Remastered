@@ -501,3 +501,64 @@ export async function getMe(req, res) {
       });
    }
 }
+
+export const googleCallback = async (req, res) => {
+   try {
+      // const user = req.user;
+      const { id, displayName, emails, photos } = req.user;
+
+      const email = emails?.[0]?.value;
+      const profilePic = photos?.[0]?.value;
+
+      let user = await userModel.findOne({
+         $or: [{ email }, { googleId: id }],
+      });
+
+      if (!user) {
+         user = await userModel.create({
+            email,
+            googleId: id,
+            fullname: displayName,
+            profilePic,
+         });
+      }
+
+      const refreshToken = jwt.sign(
+         { id: user._id },
+         configs.JWT_REFRESH_SECRET,
+         { expiresIn: "7d" },
+      );
+
+      const refreshTokenHash = crypto
+         .createHash("sha256")
+         .update(refreshToken)
+         .digest("hex");
+
+      await sessionModel.create({
+         user: user._id,
+         refreshTokenHash,
+         ip: req.ip,
+         userAgent: req.headers["user-agent"],
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+         httpOnly: true,
+         secure: true,
+         sameSite: "none",
+         maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      const clientUrl = configs.NODE_ENV === "development"
+         ? configs.CLIENT_URL
+         : configs.CORS_ORIGIN;
+
+      return res.redirect(`${clientUrl}`);
+   } catch (err) {
+      console.error("Google Callback Error:", err);
+
+      configs.NODE_ENV === "development"
+         ? configs.CLIENT_URL
+         : configs.CORS_ORIGIN;
+      return res.redirect(`${configs.CLIENT_URL}/login`);
+   }
+};
