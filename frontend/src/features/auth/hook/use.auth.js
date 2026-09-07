@@ -1,6 +1,18 @@
 import { useDispatch } from "react-redux";
-import { setError, setLoading, setUser } from "../auth.slice.js";
-import { getMe, login, logout, register } from "../service/auth.api.js";
+import {
+   setAccessToken,
+   setError,
+   setLoading,
+   setUser,
+} from "../auth.slice.js";
+import {
+   getMe,
+   login,
+   logout,
+   logoutAll,
+   refreshToken,
+   register,
+} from "../service/auth.api.js";
 import { useNavigate } from "react-router-dom";
 
 export const useAuth = () => {
@@ -11,7 +23,7 @@ export const useAuth = () => {
       try {
          dispatch(setLoading(true));
 
-         await register({ username, email, password }); // email ke through registration kar rahe
+         await register({ username, email, password }); // email notification ke through registration kar rahe
       } catch (err) {
          dispatch(
             setError(err.response?.data?.message || "Registration Failed"),
@@ -25,9 +37,28 @@ export const useAuth = () => {
       try {
          dispatch(setLoading(true));
          const data = await login({ email, password });
-         dispatch(setUser(data.user));
+         dispatch(setUser(data?.user));
+         dispatch(setAccessToken(data?.accessToken));
       } catch (err) {
          dispatch(setError(err.response?.data?.message || "login Failed"));
+      } finally {
+         dispatch(setLoading(false));
+      }
+   }
+
+   async function handleRefreshToken() {
+      try {
+         dispatch(setLoading(true));
+         const data = await refreshToken();
+         dispatch(setAccessToken(data?.accessToken));
+      } catch (err) {
+         dispatch(
+            setError(
+               err.response?.data?.message ||
+                  err?.name ||
+                  "Refresh Token Failed",
+            ),
+         );
       } finally {
          dispatch(setLoading(false));
       }
@@ -60,5 +91,27 @@ export const useAuth = () => {
       }
    }
 
-   return { handleRegister, handleLogin, handleGetMe, handleLogout };
+   async function handleLogoutAll() {
+      try {
+         dispatch(setLoading(true));
+         await logoutAll();
+      } catch (err) {
+         dispatch(
+            setError(
+               err.response?.data?.message || "Logout from all devices failed",
+            ),
+         );
+      } finally {
+         dispatch(setLoading(false));
+      }
+   }
+
+   return {
+      handleRegister,
+      handleLogin,
+      handleRefreshToken,
+      handleGetMe,
+      handleLogout,
+      handleLogoutAll,
+   };
 };

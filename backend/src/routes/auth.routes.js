@@ -35,7 +35,7 @@ authRouter.post("/logout-all", logoutAllUser);
 
 authRouter.get("/get-me", authUser, getMe);
 
-// Refresh Token Route - to get a new access token using a refresh token
+// Refresh Token Route - to create a new access token using a refresh token
 authRouter.get("/refresh-token", refreshToken);
 
 // Google OAuth

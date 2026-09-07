@@ -1,15 +1,30 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "../hook/use.auth.js";
+import { useSelector } from "react-redux";
 
 const Register = () => {
    const [username, setUsername] = useState("");
    const [email, setEmail] = useState("");
    const [password, setPassword] = useState("");
 
-   const handleSubmit = (e) => {
+   const user = useSelector((state) => state.auth.user);
+   const loading = useSelector((state) => state.auth.loading);
+
+   const navigate = useNavigate();
+
+   const { handleRegister } = useAuth();
+
+   const handleSubmit = async (e) => {
       e.preventDefault();
-      const payLoad = { username, email, password };
+      await handleRegister({ username, email, password });
+      navigate("/login", { replace: true });
    };
+
+   // prevent to go back to register page if once logged in - if not loading AND user is hydrated - redirect to dashboard
+   if (!loading && user) {
+      return <Navigate to="/" replace />;
+   }
 
    return (
       <div className="min-h-screen bg-gradient-to-br bg-stone-900 flex items-center justify-center p-4">

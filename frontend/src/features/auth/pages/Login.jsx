@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { Link, replace, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../hook/use.auth.js";
 import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
 
 const Login = () => {
    const [email, setEmail] = useState("");
@@ -21,7 +20,7 @@ const Login = () => {
       navigate("/", { replace: true });
    };
 
-   // prevent to go back to Login page if once logged in
+   // prevent to go back to Login page if once logged in - if not loading AND user is hydrated - redirect to dashboard
    if (!loading && user) {
       return <Navigate to="/" replace />;
    }
@@ -33,7 +32,7 @@ const Login = () => {
             <div className="bg-stone-900 rounded-s-3xl p-8 border border-stone-400">
                {/* Header */}
                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold bg-gradient-to-r text-stone-400 mb-2">
+                  <h1 className="text-3xl font-bold bg-linear-to-r text-stone-400 mb-2">
                      Welcome Back
                   </h1>
                   <p className="text-slate-400 text-sm">

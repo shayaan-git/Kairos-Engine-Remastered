@@ -113,7 +113,7 @@ export async function verifyEmail(req, res) {
 
       await user.save();
 
-      const LoginUrl = `${configs.CLIENT_URL}/api/auth/login`;
+      const LoginUrl = `${configs.CORS_ORIGIN}/login`;
 
       return res.send(verifyEmailHTMLTemplate(LoginUrl));
    } catch (err) {
@@ -309,7 +309,7 @@ export async function loginUser(req, res) {
 
 export async function refreshToken(req, res) {
    try {
-      const refreshToken = req.cookies.refreshToken;
+      const refreshToken = req.cookies?.refreshToken;
 
       if (!refreshToken) {
          return res.status(401).json({
@@ -347,6 +347,7 @@ export async function refreshToken(req, res) {
       });
 
       if (!session) {
+         res.clearCookie("refreshToken");
          return res.status(401).json({
             message: "Invalid Refresh Token",
          });
@@ -394,6 +395,7 @@ export async function refreshToken(req, res) {
       return res.status(403).json({
          message: "Invalid refresh token",
          success: false,
+         error: err.name
       });
    }
 }
