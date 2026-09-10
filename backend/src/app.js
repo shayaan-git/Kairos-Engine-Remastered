@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes.js";
+import chatRouter from "./routes/chat.routes.js";
 import cors from "cors";
 
 import passport from "passport";
@@ -34,7 +35,7 @@ passport.use(
          callbackURL: "/api/auth/google/callback",
       },
       (accessToken, refreshToken, profile, done) => {
-         return done(null, profile);   // profile = req.user
+         return done(null, profile); // profile = req.user
       },
    ),
 );
@@ -49,5 +50,6 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api/auth", authRouter);
+app.use("/api/chats", chatRouter);
 
 export default app;
