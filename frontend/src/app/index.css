@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #FAF9F5;
+  --color-sidebar: #F0EEE6;
+  --color-ink: #1F1E1D;
+  --color-accent: #D97757;
+  /* --font-serif: Georgia, "Times New Roman", serif; */
+  /* --font-sans: ui-sans-serif, system-ui, sans-serif; */
+}
+
+.dark {
+  --color-bg: #262624;
+  --color-sidebar: #1F1E1D;
+  --color-ink: #FAF9F5;
+}
