@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from "react";
 import Dashboard from "../features/chat/pages/Dashboard.jsx";
 import Login from "../features/auth/pages/Login.jsx";
@@ -23,7 +23,7 @@ const App = () => {
             dispatch(setUser(null));
          }
       }
-      fetchUser(); 
+      fetchUser();
    }, []);
 
    return (
@@ -38,7 +38,8 @@ const App = () => {
          />
          <Route path="/login" element={<Login />} />
          <Route path="/register" element={<Register />} />
-         <Route path="*" element={<NotFoundPage/>} />
+         <Route path="/dashboard" element={<Navigate to="/" replace />} />
+         <Route path="*" element={<NotFoundPage />} />
       </Routes>
    );
 };

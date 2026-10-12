@@ -3,7 +3,7 @@ import { setAccessToken, setUser } from "../auth.slice.js";
 import { store } from "../../../app/app.store.js";
 
 const api = axios.create({
-   baseURL: "http://localhost:3000",
+   baseURL: "http://localhost:3000" || `${import.meta.env.VITE_API_URL}`,
    withCredentials: true, // refresh cookie auto bhejega
 });
 
@@ -18,6 +18,7 @@ api.interceptors.request.use((config) => {
 /**
  * Ab jahan bhi tum api.get(...) ya api.post(...) karoge, token automatically header mein chala jayega. Isse tumhe har jagah manually headers: { Authorization: ... } nahi likhna padega.
  */
+
 // Now Response interceptor — 401 pe refresh karna
 api.interceptors.response.use(
    // agar response theek hai, kuch mat karo
@@ -51,7 +52,7 @@ api.interceptors.response.use(
             // refresh bhi fail ho gaya matlab login expire — logout kar do
             store.dispatch(setUser(null));
             // window.location.href = "/login";
-            return Promise.reject(refreshErr)
+            return Promise.reject(refreshErr);
          }
       }
 

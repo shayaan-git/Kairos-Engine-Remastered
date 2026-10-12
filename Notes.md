@@ -1,4 +1,4 @@
-## KAIROS REMASTERED
+## KAIROS REMASTERED (Bipin)
 
 1. Authentication System
 2. Chat with AI
@@ -53,7 +53,7 @@ Why Need: Bohot saare chats ban rahe honge user ke through
 useNavigate hook - Button Click / Form Submit / setTimeout
 Navigate component - JSX ke ander - Protected Routes / Conditional Statements
 
-Link - simple navigation -
+Link - simple navigation (for SPA) -
 NavLink - with active navigation -> has state values like isActive, isPending, aur isTransitioning
 
 ---
@@ -92,9 +92,9 @@ To ek auth middleware bana rahe honge get-Me API ke route mein use karne ke liye
 
 There is a bigger architectural gap than the cookie issue — it explains everything, including why it fails **even right after a successful login**.
 
-### The design
+### The Auth design
 
-Your backend uses a two-token pattern:
+The backend uses a two-token pattern here for Auth. with Google OAuth 2.0:
 
 - **`accessToken`** — short-lived (15m), returned in the **JSON body** of login/refresh. Expected to be sent by the client via `Authorization: Bearer <token>` header on protected routes.
 - **`refreshToken`** — long-lived (7d), set as an **httpOnly cookie**, used only to silently mint a new `accessToken` via `/refresh-token`.
@@ -170,6 +170,13 @@ Then, Dashboard component ko Protected component ke ander wrap kardo.
 - first httpServer initialized karte hain using `npm i socket.io` - at backend - server.socket.js and server.js file setup
 
 - then user aur socket ko (i.e frontend & backend ko) connect karte hain using `npm i socket.io-client` - at frontend - service/chat.socket.io and hooks/useChat.js file setup. Then Dashboard/home pe hydrate kardo
+
+---
+### The Frontend Design
+Frontend UI Design with Google Stitch AI for Dashboard.jsx.
+Create a `chat.slice.js` using redux for state manage.
+Not Create app.routes.jsx for routing as react-router-dom is already in use.
+
 
 ---
 
@@ -261,3 +268,7 @@ export async function generateChatResponse(messages) {
 }
 
  ```
+
+ ---
+
+### F

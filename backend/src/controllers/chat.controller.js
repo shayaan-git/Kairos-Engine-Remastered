@@ -6,6 +6,7 @@ import {
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 
+// Rate-Limiting to add
 export async function sendMessage(req, res) {
    try {
       // Getting the message and ChatId from the req.body
@@ -27,11 +28,18 @@ export async function sendMessage(req, res) {
             title,
          });
          activeChatId = chat._id;
+      } else {
+         const existing = await chatModel.findOne({
+            _id: chatId,
+            user: req.user.id,
+         });
+         if (!existing)
+            return res.status(404).json({ message: "Chat not found" });
       }
 
       // Creating a user message and storing to db (messageModel) based on chatId or activeChatId
       const userMessage = await messageModel.create({
-         chat: activeChatId, //chatId req.body se mili to theek warna fallBack use hoga from chatModel.
+         chat: activeChatId, //chatId req.body se mili to theek warna new chatId use hoga from chatModel.
          content: message,
          role: "user", //Here, set ROLE = "user"
       });
@@ -54,9 +62,13 @@ export async function sendMessage(req, res) {
       });
 
       // For Sending/Showing these response in Frontend
-      res.status(201).json({ title, chat, aiMessage });
+      res.status(201).json({ title, chat, chatId: activeChatId, aiMessage });
    } catch (err) {
       console.error("Something went wrong in chat Controller", err);
+      res.status(500).json({
+         success: false,
+         message: "Failed to send message",
+      });
    }
 }
 
